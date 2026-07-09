@@ -173,6 +173,6 @@ Notasi kardinalitas: `||` = satu, `o{` = nol-atau-banyak, `}o--o{` = banyak-ke-b
 ## Langkah Berikutnya (Tahap Skema)
 
 - Menetapkan tipe kolom, primary/foreign key, index, dan constraint.
-- Menulis model Prisma di `packages/db/prisma/schema.prisma`.
+- Menulis model Prisma di `prisma/schema.prisma`.
 - Menetapkan kolom `tenant_id` + kebijakan RLS PostgreSQL + helper `withTenant()`.
 - Menentukan field yang dienkripsi (NIK, No. BPJS) dan kebijakan retensi.

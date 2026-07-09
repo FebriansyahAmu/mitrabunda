@@ -20,7 +20,7 @@ Secara teknis, inti sistem adalah **lapisan tracking + koordinasi + notifikasi**
 
 ## 3. Arsitektur Deployment
 
-Satu codebase (monorepo), namun **dua proses aplikasi** yang di-deploy: `web` dan `worker`, berbagi Redis, PostgreSQL, dan object storage.
+Satu codebase (satu app Next.js), namun **dua proses** yang di-deploy: `web` (Next.js) dan `worker`, berbagi Redis, PostgreSQL, dan object storage.
 
 ```mermaid
 flowchart TD
@@ -107,7 +107,7 @@ Redis menjadi broker antara producer dan worker.
 | Kategori | Dipilih ✓ | Ditolak ✗ | Alasan |
 |---|---|---|---|
 | Bahasa | TypeScript (end-to-end) | — | Satu bahasa FE–BE–worker |
-| Struktur | Monorepo | — | Berbagi logika antara web & worker |
+| Struktur | Satu app Next.js (`src/`) | Monorepo (apps/* + packages/*) | Worker cukup berbagi `src/lib`; hindari kompleksitas monorepo untuk tim kecil |
 | Aplikasi | Next.js fullstack + worker | NestJS API terpisah | Cukup untuk tim kecil; NestJS ditunda sampai perlu |
 | Frontend | Tailwind + shadcn/ui + Recharts/Tremor | — | Padat, pas untuk dashboard |
 | Validasi | Zod | — | Dipakai bersama client & server |
@@ -138,32 +138,50 @@ Redis menjadi broker antara producer dan worker.
 
 ---
 
-## 9. Struktur Folder Monorepo
+## 9. Struktur Folder Proyek
 
 ```
-apps/
-  web/                        # Next.js fullstack (boundary web + UI)
-    app/
-      api/.../route.ts        # boundary: req/res → panggil service
-      (dashboard)/...         # UI (server components → service, bukan Prisma)
-      actions/                # server actions (boundary alternatif)
-    middleware.ts             # auth guard + resolve tenant
-  worker/                     # boundary background (BullMQ)
-    jobs/                     # hpl-detection, reminder, monthly-report
-    index.ts
-
-packages/
-  core/                       # LOGIKA DIPAKAI BERSAMA
-    services/                 # Service layer
+src/
+  app/
+    (auth)/                   # route group: login dll. (tak muncul di URL)
+      login/page.tsx
+    (dashboard)/              # route group: area terproteksi
+      layout.tsx              # shell + nav (server component → service)
+      page.tsx                # dashboard utama
+      ibu-hamil/
+        page.tsx
+        _components/          # kolokasi komponen (private, non-routable)
+        _actions/             # server actions (boundary → lib/services)
+    api/.../route.ts          # boundary REST (webhook / eksternal FHIR)
+    layout.tsx                # root layout
+  components/
+    ui/                       # shadcn (di-generate, kode dimiliki repo)
+    ...                       # komponen bersama lain
+  lib/
     dal/                      # Data Access Layer (satu-satunya sentuh Prisma)
+    services/                 # Service layer (business logic · authz · orkestrasi)
     dto/                      # DTO + mapper
     validation/               # skema Zod
-  db/
-    prisma/schema.prisma      # (menyusul — tahap skema)
-    client.ts                 # withTenant() → set app.tenant_id untuk RLS
-  queue/                      # definisi Queue BullMQ (dipakai producer & worker)
-  config/
+    db/                       # prisma client + withTenant() (set app.tenant_id, RLS)
+    queue/                    # definisi Queue BullMQ (producer; dipakai app & worker)
+    utils.ts                  # helper cn() dari shadcn
+  worker/                     # proses ke-2 (di luar Next.js) — import lib/services & lib/dal
+    index.ts                  # bootstrap BullMQ worker + scheduler (cron)
+    jobs/                     # hpl-detection, reminder, monthly-report
+  proxy.ts                    # auth guard + resolve tenant (di src, sejajar app/)
+prisma/
+  schema.prisma               # (menyusul — tahap skema)
+components.json               # konfigurasi shadcn
+package.json                  # satu paket: `next dev/start` + skrip worker (tsx)
 ```
+
+> **Catatan struktur (default Next.js 16 — satu app, `src/`):**
+> - **Bukan monorepo.** Satu proyek Next.js. Layer bisnis ada di `src/lib`: `dal` (satu-satunya menyentuh Prisma) → `services` (business logic + authz + orkestrasi). Aturan berlapis **boundary → service → dal** tetap berlaku, cukup untuk tim kecil.
+> - **Worker = proses ke-2, bukan app terpisah.** `src/worker` dijalankan sebagai proses tersendiri (mis. `tsx src/worker/index.ts`) dan meng-*import* `src/lib/services`, `src/lib/dal`, `src/lib/queue` yang sama → tidak ada duplikasi logika, tanpa perlu `packages/*`.
+> - **`proxy.ts`** (Next 16; dulu `middleware.ts`) diletakkan di dalam `src/`, sejajar `app/`. Runtime Node.js. Codemod: `npx @next/codemod@canary middleware-to-proxy .`
+> - **Authz tetap di Service + RLS**, bukan hanya proxy (matcher bisa terlewat saat refactor).
+> - **shadcn/ui** di `src/components/ui`; server action dikolokasikan per fitur di private folder `_actions`.
+> - **Disiplin batas lapisan** (karena tak ada batas package): tandai `src/lib/dal` & `src/lib/services` sebagai `server-only`, dan cegah impor `next/*` masuk ke modul yang dipakai worker via aturan ESLint `no-restricted-imports`.
 
 ---
 

@@ -8,7 +8,7 @@ Sistem dipetakan menjadi **11 modul inti** (mengikuti alur kerja 10 tahap propos
 |---|---|---|
 | **Cakupan** | UI Next.js (App Router), komponen, form, dashboard, chart, state, pemanggilan `/api`/server actions | Service layer, DAL, route handlers, worker jobs, integrasi, business rules, RLS |
 | **Fokus** | Pengalaman pengguna, tampilan, interaksi, validasi UX | Logika, data, keamanan, penjadwalan, notifikasi, pelaporan |
-| **Kontrak bersama** | Skema **Zod** (di `packages/core/validation`) dan **DTO** menjadi kontrak antara FE dan BE | |
+| **Kontrak bersama** | Skema **Zod** (di `src/lib/validation`) dan **DTO** (di `src/lib/dto`) menjadi kontrak antara FE dan BE | |
 
 ---
 

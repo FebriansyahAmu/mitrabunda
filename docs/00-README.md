@@ -30,6 +30,8 @@ Sistem navigasi pelayanan maternal prediktif untuk penguatan integrasi RSUD–Pu
 | 02 | [`02-modules-and-features.md`](./02-modules-and-features.md) | Deskripsi modul, fitur, dan pembagian kerja **FE / BE** |
 | 03 | [`03-data-flow.md`](./03-data-flow.md) | Data Flow Diagram (Level 0 & Level 1) |
 | 04 | [`04-erd.md`](./04-erd.md) | Entity Relationship Diagram (konseptual, **tanpa skema**) |
+| 05 | [`05-frontend-plan.md`](./05-frontend-plan.md) | Rencana setup FE + breakdown per modul & fitur (MVP-first) |
+| 06 | [`06-frontend-workflow.md`](./06-frontend-workflow.md) | Workflow & TODO list FE per modul & fitur (checklist eksekusi) |
 
 ---
 
@@ -46,5 +48,5 @@ Sistem navigasi pelayanan maternal prediktif untuk penguatan integrasi RSUD–Pu
 - [x] Data Flow Diagram
 - [x] ERD konseptual
 - [ ] Skema Prisma + strategi RLS *(berikutnya)*
-- [ ] Skeleton monorepo (`apps/web`, `apps/worker`, `packages/*`)
+- [ ] Skeleton proyek (`src/app`, `src/lib`, `src/worker`)
 - [ ] Backlog & sprint MVP
