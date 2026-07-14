@@ -1,6 +1,11 @@
 import type { DashboardSummaryDTO } from "@/lib/dto/dashboard";
+import type { IbuHamilDTO } from "@/lib/dto/ibu-hamil";
+import type { PuskesmasDTO } from "@/lib/dto/puskesmas";
+import type { TrenBulanan } from "@/lib/mock/tren";
 import { RISK_LEVELS } from "@/lib/dto/common";
 import { getIbuHamilList } from "./ibu-hamil";
+import { getPuskesmasList } from "./puskesmas";
+import { getTrenBulanan } from "./tren";
 
 export async function getDashboardSummary(): Promise<DashboardSummaryDTO> {
   const list = await getIbuHamilList();
@@ -26,4 +31,20 @@ export async function getDashboardSummary(): Promise<DashboardSummaryDTO> {
     ).length,
     distribusiRisiko,
   };
+}
+
+export interface DashboardData {
+  list: IbuHamilDTO[];
+  puskesmas: PuskesmasDTO[];
+  tren: TrenBulanan[];
+}
+
+/** Satu panggilan untuk seluruh data dashboard (dashboard menghitung metrik dari `list`). */
+export async function getDashboardData(): Promise<DashboardData> {
+  const [list, puskesmas, tren] = await Promise.all([
+    getIbuHamilList(),
+    getPuskesmasList(),
+    getTrenBulanan(),
+  ]);
+  return { list, puskesmas, tren };
 }
