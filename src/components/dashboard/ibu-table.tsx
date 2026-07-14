@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type Column,
@@ -48,61 +49,106 @@ function SortButton({
   );
 }
 
-const columns: ColumnDef<IbuHamilDTO>[] = [
-  {
-    accessorKey: "nama",
-    header: ({ column }) => <SortButton column={column}>Nama</SortButton>,
-    cell: ({ row }) => (
-      <div className="min-w-0">
-        <div className="font-medium">{row.original.nama}</div>
-        <div className="text-xs text-muted-foreground">
-          NIK {row.original.nikMasked}
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "puskesmasNama",
-    header: "Puskesmas",
-    cell: ({ row }) => (
-      <span className="text-sm">{row.original.puskesmasNama}</span>
-    ),
-  },
-  {
-    accessorKey: "usiaKehamilanMinggu",
-    header: "Usia",
-    cell: ({ row }) => (
-      <span className="tabular-nums">{row.original.usiaKehamilanMinggu} mgg</span>
-    ),
-  },
-  {
-    accessorKey: "hariMenujuHpl",
-    header: ({ column }) => <SortButton column={column}>HPL</SortButton>,
-    cell: ({ row }) => (
-      <div className="flex flex-col">
-        <HplCountdown hari={row.original.hariMenujuHpl} />
-        <span className="text-xs text-muted-foreground">
-          {formatTanggalRingkas(row.original.hpl)}
-        </span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "levelRisiko",
-    header: "Risiko",
-    cell: ({ row }) => <RiskBadge level={row.original.levelRisiko} />,
-  },
-  {
-    accessorKey: "statusAlur",
-    header: "Status",
-    cell: ({ row }) => <StatusPill status={row.original.statusAlur} />,
-  },
-];
-
-export function IbuTable({ data }: { data: IbuHamilDTO[] }) {
+export function IbuTable({
+  data,
+  getHref,
+  pageSize = 7,
+}: {
+  data: IbuHamilDTO[];
+  getHref?: (ibu: IbuHamilDTO) => string;
+  pageSize?: number;
+}) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "hariMenujuHpl", desc: false },
   ]);
+
+  const columns = useMemo<ColumnDef<IbuHamilDTO>[]>(() => {
+    const cols: ColumnDef<IbuHamilDTO>[] = [
+      {
+        accessorKey: "nama",
+        header: ({ column }) => <SortButton column={column}>Nama</SortButton>,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            {getHref ? (
+              <Link
+                href={getHref(row.original)}
+                className="font-medium hover:text-primary hover:underline"
+              >
+                {row.original.nama}
+              </Link>
+            ) : (
+              <div className="font-medium">{row.original.nama}</div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              NIK {row.original.nikMasked}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "puskesmasNama",
+        header: "Puskesmas",
+        cell: ({ row }) => (
+          <span className="text-sm">{row.original.puskesmasNama}</span>
+        ),
+      },
+      {
+        accessorKey: "usiaKehamilanMinggu",
+        header: "Usia",
+        cell: ({ row }) => (
+          <span className="tabular-nums">
+            {row.original.usiaKehamilanMinggu} mgg
+          </span>
+        ),
+      },
+      {
+        accessorKey: "hariMenujuHpl",
+        header: ({ column }) => <SortButton column={column}>HPL</SortButton>,
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <HplCountdown hari={row.original.hariMenujuHpl} />
+            <span className="text-xs text-muted-foreground">
+              {formatTanggalRingkas(row.original.hpl)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "levelRisiko",
+        header: "Risiko",
+        cell: ({ row }) => <RiskBadge level={row.original.levelRisiko} />,
+      },
+      {
+        accessorKey: "statusAlur",
+        header: "Status",
+        cell: ({ row }) => <StatusPill status={row.original.statusAlur} />,
+      },
+    ];
+
+    if (getHref) {
+      cols.push({
+        id: "aksi",
+        header: "",
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            nativeButton={false}
+            render={
+              <Link
+                href={getHref(row.original)}
+                aria-label={`Detail ${row.original.nama}`}
+              />
+            }
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        ),
+      });
+    }
+
+    return cols;
+  }, [getHref]);
 
   const table = useReactTable({
     data,
@@ -112,7 +158,7 @@ export function IbuTable({ data }: { data: IbuHamilDTO[] }) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 7 } },
+    initialState: { pagination: { pageSize } },
   });
 
   return (
@@ -178,7 +224,8 @@ export function IbuTable({ data }: { data: IbuHamilDTO[] }) {
             <span className="sr-only sm:not-sr-only">Sebelumnya</span>
           </Button>
           <span className="text-xs tabular-nums text-muted-foreground">
-            {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
+            {table.getState().pagination.pageIndex + 1} /{" "}
+            {table.getPageCount() || 1}
           </span>
           <Button
             variant="outline"
