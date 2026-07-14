@@ -41,6 +41,10 @@ export interface DashboardData {
 
 /** Satu panggilan untuk seluruh data dashboard (dashboard menghitung metrik dari `list`). */
 export async function getDashboardData(): Promise<DashboardData> {
+  // Simulasi latensi jaringan agar skeleton (loading.tsx) tampil.
+  // Hapus saat seam ini dialihkan ke Service BE.
+  await new Promise((resolve) => setTimeout(resolve, 700));
+
   const [list, puskesmas, tren] = await Promise.all([
     getIbuHamilList(),
     getPuskesmasList(),

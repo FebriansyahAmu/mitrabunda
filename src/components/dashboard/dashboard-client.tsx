@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Baby, CalendarClock, TriangleAlert, Users } from "lucide-react";
+import { MotionConfig } from "motion/react";
 
+import { MotionItem, MotionStagger } from "@/components/motion/animated";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   DashboardFilters,
@@ -96,115 +98,135 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Dashboard"
-        description="Pemantauan ibu hamil dalam pengawasan — diperbarui setiap hari kerja."
-      />
+    <MotionConfig reducedMotion="user">
+      <MotionStagger className="space-y-6">
+        <MotionItem>
+          <PageHeader
+            title="Dashboard"
+            description="Pemantauan ibu hamil dalam pengawasan — diperbarui setiap hari kerja."
+          />
+        </MotionItem>
 
-      <DashboardFilters puskesmas={puskesmas} value={filter} onChange={setFilter} />
+        <MotionItem>
+          <DashboardFilters
+            puskesmas={puskesmas}
+            value={filter}
+            onChange={setFilter}
+          />
+        </MotionItem>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Ibu Hamil" value={kpi.total} icon={Users} delta={12} />
-        <StatCard
-          label="Risiko Tinggi"
-          value={kpi.risikoTinggi}
-          icon={TriangleAlert}
-          delta={8}
-          invertDelta
-          accentClassName="bg-risk-tinggi/12 text-risk-tinggi"
-          hint="Tinggi + Sangat Tinggi"
-        />
-        <StatCard
-          label="Menjelang Persalinan"
-          value={kpi.menjelang}
-          icon={CalendarClock}
-          accentClassName="bg-risk-sedang/12 text-risk-sedang"
-          hint="HPL ≤ 30 hari"
-        />
-        <StatCard
-          label="Sudah Bersalin"
-          value={kpi.bersalin}
-          icon={Baby}
-          delta={5}
-          accentClassName="bg-risk-rendah/12 text-risk-rendah"
-        />
-      </div>
+        <MotionStagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MotionItem lift>
+            <StatCard label="Total Ibu Hamil" value={kpi.total} icon={Users} delta={12} />
+          </MotionItem>
+          <MotionItem lift>
+            <StatCard
+              label="Risiko Tinggi"
+              value={kpi.risikoTinggi}
+              icon={TriangleAlert}
+              delta={8}
+              invertDelta
+              accentClassName="bg-risk-tinggi/12 text-risk-tinggi"
+              hint="Tinggi + Sangat Tinggi"
+            />
+          </MotionItem>
+          <MotionItem lift>
+            <StatCard
+              label="Menjelang Persalinan"
+              value={kpi.menjelang}
+              icon={CalendarClock}
+              accentClassName="bg-risk-sedang/12 text-risk-sedang"
+              hint="HPL ≤ 30 hari"
+            />
+          </MotionItem>
+          <MotionItem lift>
+            <StatCard
+              label="Sudah Bersalin"
+              value={kpi.bersalin}
+              icon={Baby}
+              delta={5}
+              accentClassName="bg-risk-rendah/12 text-risk-rendah"
+            />
+          </MotionItem>
+        </MotionStagger>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Tren Registrasi &amp; Persalinan
-            </CardTitle>
-            <CardDescription>6 bulan terakhir</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrenArea data={tren} />
-          </CardContent>
-        </Card>
+        <MotionItem className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Tren Registrasi &amp; Persalinan
+              </CardTitle>
+              <CardDescription>6 bulan terakhir</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TrenArea data={tren} />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Distribusi Risiko</CardTitle>
-            <CardDescription>Mengikuti filter aktif</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <RiskDonut data={risikoData} />
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-              {risikoData.map((d) => (
-                <li
-                  key={d.level}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: `var(--risk-${d.level})` }}
-                    />
-                    <span className="text-muted-foreground">
-                      {RISK_LABEL[d.level]}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Distribusi Risiko</CardTitle>
+              <CardDescription>Mengikuti filter aktif</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RiskDonut data={risikoData} />
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                {risikoData.map((d) => (
+                  <li
+                    key={d.level}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className="size-2 rounded-full"
+                        style={{ backgroundColor: `var(--risk-${d.level})` }}
+                      />
+                      <span className="text-muted-foreground">
+                        {RISK_LABEL[d.level]}
+                      </span>
                     </span>
-                  </span>
-                  <span className="font-medium tabular-nums">{d.jumlah}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+                    <span className="font-medium tabular-nums">{d.jumlah}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </MotionItem>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Ibu Hamil per Puskesmas</CardTitle>
-            <CardDescription>Sebaran wilayah kerja</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PuskesmasBar data={puskesmasData} />
-          </CardContent>
-        </Card>
+        <MotionItem className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Ibu Hamil per Puskesmas</CardTitle>
+              <CardDescription>Sebaran wilayah kerja</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PuskesmasBar data={puskesmasData} />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Sasaran H-30</CardTitle>
-            <CardDescription>Prioritas menjelang persalinan</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SasaranList items={sasaran} />
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Sasaran H-30</CardTitle>
+              <CardDescription>Prioritas menjelang persalinan</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SasaranList items={sasaran} />
+            </CardContent>
+          </Card>
+        </MotionItem>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Daftar Ibu Hamil</CardTitle>
-          <CardDescription>{filtered.length} ibu sesuai filter</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <IbuTable data={filtered} />
-        </CardContent>
-      </Card>
-    </div>
+        <MotionItem>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Daftar Ibu Hamil</CardTitle>
+              <CardDescription>{filtered.length} ibu sesuai filter</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <IbuTable data={filtered} />
+            </CardContent>
+          </Card>
+        </MotionItem>
+      </MotionStagger>
+    </MotionConfig>
   );
 }
