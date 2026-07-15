@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
+  Building2,
   CalendarClock,
   Check,
   Loader2,
@@ -18,6 +19,8 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { MotionItem, MotionStagger } from "@/components/motion/animated";
+import { DatePicker } from "@/components/shared/date-picker";
 import { HplCountdown } from "@/components/shared/hpl-countdown";
 import { PageHeader } from "@/components/shared/page-header";
 import { RiskBadge } from "@/components/shared/risk-badge";
@@ -50,8 +53,8 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   { title: "Data Ibu", desc: "Identitas & kontak", icon: UserRound },
-  { title: "Kehamilan", desc: "Faskes & HPL", icon: CalendarClock },
-  { title: "Risiko & Rencana", desc: "Faktor & persalinan", icon: ShieldCheck },
+  { title: "Kehamilan", desc: "Faskes & perkiraan lahir", icon: CalendarClock },
+  { title: "Risiko & Rencana", desc: "Faktor & tempat bersalin", icon: ShieldCheck },
 ];
 
 type NikStatus = { status: "idle" | "checking" | "ok" | "dup"; nama?: string };
@@ -85,6 +88,41 @@ function Field({
       ) : hint ? (
         <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
+    </div>
+  );
+}
+
+/** Pilihan tunggal berbentuk pill (pengganti dropdown untuk opsi pendek). */
+function PillGroup({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const active = value === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(opt)}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-sm transition-colors",
+              active
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {opt}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -137,6 +175,7 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
   ];
 
   const nikReg = register("nik");
+  const StepIcon = STEPS[step].icon;
 
   async function handleNik(value: string) {
     if (!/^\d{16}$/.test(value)) {
@@ -186,8 +225,8 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <MotionStagger className="space-y-6">
+      <MotionItem>
         <Button
           variant="ghost"
           size="sm"
@@ -202,9 +241,9 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
           title="Tambah Ibu Hamil"
           description="Isi data bertahap. Sistem memvalidasi tiap langkah dan memeriksa duplikasi NIK otomatis."
         />
-      </div>
+      </MotionItem>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <MotionItem className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Form */}
         <div className="space-y-4">
           {/* Stepper */}
@@ -237,9 +276,6 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                     >
                       {s.title}
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {s.desc}
-                    </div>
                   </div>
                   {i < STEPS.length - 1 ? (
                     <div
@@ -254,9 +290,24 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
             })}
           </ol>
 
-          <Card>
+          <Card className="overflow-hidden">
             <form onSubmit={handleSubmit(onSubmit)}>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 pb-8">
+                {/* Section header */}
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <StepIcon className="size-5" aria-hidden />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Langkah {step + 1} dari {STEPS.length}
+                    </p>
+                    <h2 className="text-base font-semibold">
+                      {STEPS[step].title}
+                    </h2>
+                  </div>
+                </div>
+
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={step}
@@ -384,7 +435,11 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                                 value={field.value}
                                 onValueChange={field.onChange}
                               >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger className="h-auto w-full py-2">
+                                  <MapPin
+                                    className="size-4 text-muted-foreground"
+                                    aria-hidden
+                                  />
                                   <SelectValue>
                                     {(v: string) =>
                                       v ? (
@@ -401,7 +456,14 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                                 <SelectContent>
                                   {puskesmas.map((p) => (
                                     <SelectItem key={p.id} value={p.id}>
-                                      {p.nama}
+                                      <span className="flex flex-col">
+                                        <span className="font-medium">
+                                          {p.nama}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {p.wilayahKerja}
+                                        </span>
+                                      </span>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -421,11 +483,18 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                               : undefined
                           }
                         >
-                          <Input
-                            id="hpl"
-                            type="date"
-                            {...register("hpl")}
-                            aria-invalid={!!errors.hpl}
+                          <Controller
+                            control={control}
+                            name="hpl"
+                            render={({ field }) => (
+                              <DatePicker
+                                id="hpl"
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Pilih tanggal HPL"
+                                invalid={!!errors.hpl}
+                              />
+                            )}
                           />
                         </Field>
 
@@ -433,36 +502,17 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                           label="Riwayat Persalinan"
                           required
                           error={errors.riwayatPersalinan?.message}
+                          className="sm:col-span-2"
                         >
                           <Controller
                             control={control}
                             name="riwayatPersalinan"
                             render={({ field }) => (
-                              <Select
+                              <PillGroup
+                                options={RIWAYAT_PERSALINAN}
                                 value={field.value}
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue>
-                                    {(v: string) =>
-                                      v ? (
-                                        v
-                                      ) : (
-                                        <span className="text-muted-foreground">
-                                          Pilih riwayat
-                                        </span>
-                                      )
-                                    }
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {RIWAYAT_PERSALINAN.map((r) => (
-                                    <SelectItem key={r} value={r}>
-                                      {r}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                onChange={field.onChange}
+                              />
                             )}
                           />
                         </Field>
@@ -549,6 +599,10 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                                 onValueChange={field.onChange}
                               >
                                 <SelectTrigger className="w-full">
+                                  <Building2
+                                    className="size-4 text-muted-foreground"
+                                    aria-hidden
+                                  />
                                   <SelectValue>
                                     {(v: string) =>
                                       v ? (
@@ -578,7 +632,7 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
                 </AnimatePresence>
               </CardContent>
 
-              <div className="flex items-center justify-between border-t px-6 py-4">
+              <div className="flex items-center justify-between border-t bg-muted/30 px-6 py-4">
                 <Button
                   type="button"
                   variant="ghost"
@@ -653,8 +707,8 @@ export function IntakeForm({ puskesmas }: { puskesmas: PuskesmasDTO[] }) {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+      </MotionItem>
+    </MotionStagger>
   );
 }
 
